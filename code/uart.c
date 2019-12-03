@@ -4,18 +4,17 @@
  * Functionality for transmitting and receiving data over uart
  *
  * Created: 11/7/19
- * Last Edited: 12/1/19
+ * Last Edited: 12/3/19
  * Author: Andrew Hollabaugh
  */
 
 #include "uart.h"
 #include "rx_queue.h"
-#include "fan.h"
-#include "main.h"
+#include "speaker.h"
 
 //command characters
-#define SET_TEMP_CMD 'T'
-#define SET_FAN_CMD 'F'
+#define TONE_BEGIN_CMD 'B'
+#define TONE_END_CMD 'E'
 
 #define CMD_BUFFER_LENGTH 8 //max length of command array
 char cmd[CMD_BUFFER_LENGTH]; //array to store receieved command in
@@ -154,10 +153,10 @@ void uart_rx_execute_cmd_with_arg()
     }
 
     //execute command based on first char of command array
-    if(cmd[0] == SET_TEMP_CMD)
-        fan_set_auto(arg);
-    else if(cmd[0] == SET_FAN_CMD)
-        fan_set_manual(arg);
+    if(cmd[0] == TONE_BEGIN_CMD)
+        speaker_tone_begin(arg);
+    else if(cmd[0] == TONE_END_CMD)
+        speaker_tone_end(arg);
 }
 
 #if defined(__TI_COMPILER_VERSION__) || defined(__IAR_SYSTEMS_ICC__)

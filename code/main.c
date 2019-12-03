@@ -9,30 +9,23 @@
  */
 
 #include "main.h"
-#include "temp.h"
 #include "uart.h"
-#include "fan.h"
+#include "photo.h"
+#include "speaker.h"
 
 int main()
 {
     WDTCTL = WDTPW | WDTHOLD; //stop watchdog timer
 
     uart_init();
-    temp_init();
-    fan_init();
+    photo_init();
+    speaker_init();
 
     __bis_SR_register(GIE); //enable interrupts
 
     while(1)
     {
         uart_rx_check_queue(); //check the uart_rx queue for new commands
-
-        //transmit formatted temperature and fan speed over uart
-        uart_tx_str("t: ");
-        uart_tx_num((uint32_t) temp_get());
-        uart_tx_str(" f: ");
-        uart_tx_num(fan_get_speed());
-        uart_tx('\n');
     }
 }
 
