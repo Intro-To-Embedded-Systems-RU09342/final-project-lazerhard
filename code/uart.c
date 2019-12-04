@@ -13,8 +13,14 @@
 #include "speaker.h"
 
 //command characters
-#define TONE_BEGIN_CMD 'B'
-#define TONE_END_CMD 'E'
+#define VOL_C_CMD 'C'
+#define VOL_D_CMD 'D'
+#define VOL_E_CMD 'E'
+#define VOL_F_CMD 'F'
+#define VOL_G_CMD 'G'
+#define VOL_A_CMD 'A'
+#define VOL_B_CMD 'B'
+#define SET_OCTAVE_CMD 'O'
 
 #define CMD_BUFFER_LENGTH 8 //max length of command array
 char cmd[CMD_BUFFER_LENGTH]; //array to store receieved command in
@@ -153,10 +159,22 @@ void uart_rx_execute_cmd_with_arg()
     }
 
     //execute command based on first char of command array
-    if(cmd[0] == TONE_BEGIN_CMD)
-        speaker_tone_begin(arg);
-    else if(cmd[0] == TONE_END_CMD)
-        speaker_tone_end(arg);
+    if(cmd[0] == VOL_C_CMD)
+        speaker_set_volume(0, arg);
+    else if(cmd[0] == VOL_D_CMD)
+        speaker_set_volume(1, arg);
+    else if(cmd[0] == VOL_E_CMD)
+        speaker_set_volume(2, arg);
+    else if(cmd[0] == VOL_F_CMD)
+        speaker_set_volume(3, arg);
+    else if(cmd[0] == VOL_G_CMD)
+        speaker_set_volume(4, arg);
+    else if(cmd[0] == VOL_A_CMD)
+        speaker_set_volume(5, arg);
+    else if(cmd[0] == VOL_B_CMD)
+        speaker_set_volume(6, arg);
+    else if(cmd[0] == SET_OCTAVE_CMD)
+        speaker_set_octave(arg);
 }
 
 #if defined(__TI_COMPILER_VERSION__) || defined(__IAR_SYSTEMS_ICC__)

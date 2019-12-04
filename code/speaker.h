@@ -5,8 +5,9 @@
 #include <stdint.h>
 
 void speaker_init(void);
-void speaker_tone_begin(uint16_t freq);
-void speaker_tone_end(uint16_t freq);
+void speaker_set_octave(uint8_t octave);
+void speaker_set_volume(uint8_t note, uint8_t volume);
+uint16_t speaker_get_volume(uint8_t note);
 
 #endif
 
