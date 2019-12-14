@@ -10,7 +10,6 @@
 
 #include "main.h"
 #include "uart.h"
-#include "photo.h"
 #include "speaker.h"
 
 int main()
@@ -18,7 +17,6 @@ int main()
     WDTCTL = WDTPW | WDTHOLD; //stop watchdog timer
 
     uart_init();
-    photo_init();
     speaker_init();
 
     __bis_SR_register(GIE); //enable interrupts

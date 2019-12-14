@@ -13,8 +13,6 @@
 #include "photo.h"
 
 #define F_CPU 8000000
-#define F_OUT 880
-#define F_DIV F_CPU / F_OUT
 
 uint8_t current_octave = 1;
 
@@ -24,7 +22,7 @@ double freqs[3][7] = {
     {523.2, 587.3, 659.2, 698.4, 784, 880, 987.8}
 };
 
-uint16_t outputs[3] = {0, 0, 0};
+uint16_t outputs[7] = {0, 0, 0, 0, 0, 0, 0};
 
 void speaker_init()
 {
@@ -35,6 +33,14 @@ void speaker_init()
     TA0CCTL1 = CCIS_0 + OUTMOD_0 + CCIE;
     TA0CCTL2 = CCIS_0 + OUTMOD_0 + CCIE;
     TA0CTL = TASSEL_2 + MC_2 + TAIE;
+
+    P2DIR |= BIT4 + BIT5 + BIT6 + BIT7;
+    P2SEL0 |= BIT4 + BIT5 + BIT6 + BIT7;
+    TB0CCTL3 = CCIS_0 + OUTMOD_0 + CCIE;
+    TB0CCTL4 = CCIS_0 + OUTMOD_0 + CCIE;
+    TB0CCTL5 = CCIS_0 + OUTMOD_0 + CCIE;
+    TB0CCTL6 = CCIS_0 + OUTMOD_0 + CCIE;
+    TB0CTL = TASSEL_2 + MC_2 + TAIE;
 }
 
 void speaker_set_octave(uint8_t octave)
@@ -42,21 +48,26 @@ void speaker_set_octave(uint8_t octave)
     current_octave = octave;
 }
 
-void speaker_set_volume(uint8_t note, uint8_t volume)
+void speaker_set(uint8_t note, uint8_t octave)
 {
-    if(volume > 0)
+    if(octave >= 0 && octave <= 2)
     {
         switch(note)
         {
             case 0: TA0CCTL0 &= ~OUTMOD_0; TA0CCTL0 |= OUTMOD_4; break;
             case 1: TA0CCTL1 &= ~OUTMOD_0; TA0CCTL1 |= OUTMOD_4; break;
             case 2: TA0CCTL2 &= ~OUTMOD_0; TA0CCTL2 |= OUTMOD_4; break;
+            case 3: TB0CCTL3 &= ~OUTMOD_0; TB0CCTL3 |= OUTMOD_4; break;
+            case 4: TB0CCTL4 &= ~OUTMOD_0; TB0CCTL4 |= OUTMOD_4; break;
+            case 5: TB0CCTL5 &= ~OUTMOD_0; TB0CCTL5 |= OUTMOD_4; break;
+            case 6: TB0CCTL6 &= ~OUTMOD_0; TB0CCTL6 |= OUTMOD_4; break;
             default: break;
         }
 
+        current_octave = octave;
         double freq = freqs[current_octave][note];
         double output = (double) F_CPU / freq;
-        outputs[note] = output;
+        outputs[note] = (uint16_t) output / 2;
     }
     else
     {
@@ -65,48 +76,23 @@ void speaker_set_volume(uint8_t note, uint8_t volume)
             case 0: TA0CCTL0 &= ~OUTMOD_4; TA0CCTL0 |= OUTMOD_0; break;
             case 1: TA0CCTL1 &= ~OUTMOD_4; TA0CCTL1 |= OUTMOD_0; break;
             case 2: TA0CCTL2 &= ~OUTMOD_4; TA0CCTL2 |= OUTMOD_0; break;
+            case 3: TB0CCTL3 &= ~OUTMOD_4; TB0CCTL3 |= OUTMOD_0; break;
+            case 4: TB0CCTL4 &= ~OUTMOD_4; TB0CCTL4 |= OUTMOD_0; break;
+            case 5: TB0CCTL5 &= ~OUTMOD_4; TB0CCTL5 |= OUTMOD_0; break;
+            case 6: TB0CCTL6 &= ~OUTMOD_4; TB0CCTL6 |= OUTMOD_0; break;
             default: break;
         }
     }
 }
-/*
-void speaker_set_volume(uint8_t note, uint8_t volume)
+
+void speaker_set_all(uint8_t octave)
 {
-    outputs_simple[note] = volume;
-    double freq = freqs[current_octave][note];
-    double max_div_val = (double) F_CPU / freq;
-    double high_div_val = max_div_val * ((double) volume / 200.0);
-    double low_div_val = max_div_val - high_div_val;
-    uart_tx_num((uint16_t) max_div_val);
-    uart_tx(':');
-    uart_tx_num((uint16_t) high_div_val);
-    uart_tx('\n');
-    outputs[note][0] = (uint16_t) high_div_val;
-    outputs[note][1] = (uint16_t) low_div_val;
-
-    if(volume > 0)
+    for(uint8_t i = 0; i < 7; i++)
     {
-        switch(note)
-        {
-            case 0: TA0CCTL0 |= OUTMOD_4; break;
-            case 1: TA0CCTL1 |= OUTMOD_4; break;
-            case 2: TA0CCTL2 |= OUTMOD_4; break;
-            default: break;
-        }
+        speaker_set(i, octave);
     }
-    else
-    {
-        switch(note)
-        {
-            case 0: TA0CCTL0 |= OUTMOD_0; break;
-            case 1: TA0CCTL1 |= OUTMOD_0; break;
-            case 2: TA0CCTL2 |= OUTMOD_0; break;
-            default: break;
-        }
-    }
-
 }
-*/
+
 uint16_t speaker_get_volume(uint8_t note)
 {
     return outputs[note];
@@ -141,18 +127,6 @@ void __attribute__ ((interrupt(TIMER0_A1_VECTOR))) TIMER0_A1_ISR (void)
     }
 }
 
-/*
-#if defined(__TI_COMPILER_VERSION__) || defined(__IAR_SYSTEMS_ICC__)
-#pragma vector = TIMER0_B0_VECTOR
-__interrupt void Timer0_B0_ISR (void)
-#elif defined(__GNUC__)
-void __attribute__ ((interrupt(TIMER0_B0_VECTOR))) Timer0_B0_ISR (void)
-#else
-#error Compiler not supported!
-#endif
-{
-}
-
 #if defined(__TI_COMPILER_VERSION__) || defined(__IAR_SYSTEMS_ICC__)
 #pragma vector=TIMER0_B1_VECTOR
 __interrupt void TIMER0_B1_ISR(void)
@@ -162,6 +136,12 @@ void __attribute__ ((interrupt(TIMER0_B1_VECTOR))) TIMER0_B1_ISR (void)
 #error Compiler not supported!
 #endif
 {
+    switch(TB0IV)
+    {
+        case 6: TB0CCR3 += outputs[3]; break;
+        case 8: TB0CCR4 += outputs[4]; break;
+        case 10: TB0CCR5 += outputs[5]; break;
+        case 12: TB0CCR6 += outputs[6]; break;
+    }
 }
-*/
 
